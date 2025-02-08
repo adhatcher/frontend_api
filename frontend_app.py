@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Get the API host and port from environment variables (default to zeus.local:6060)
 API_HOST = os.getenv("API_HOST", "zeus.local")
-API_PORT = os.getenv("API_PORT", "6060")
+API_PORT = os.getenv("API_PORT", "6061")
 API_URL = f"http://{API_HOST}:{API_PORT}/random_phrase"
 
 # Prometheus metrics
@@ -49,6 +49,6 @@ def home():
 if __name__ == '__main__':
     # Get Flask app host and port from environment variables
     FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
-    FLASK_PORT = int(os.getenv("FLASK_PORT", "6061"))
+    FLASK_PORT = int(os.getenv("FLASK_PORT", "6060"))
     
     app.run(debug=True, host=FLASK_HOST, port=FLASK_PORT)
