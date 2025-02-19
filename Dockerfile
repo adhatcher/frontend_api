@@ -12,7 +12,8 @@ LABEL description="Flask application with configurable host and port using envir
 COPY . .
 
 # Install dependencies
-RUN pip install --no-cache-dir poetry && \
+RUN mkdir /logs && chmod 777 /logs && \
+    pip install --no-cache-dir poetry && \
     poetry install --only main --no-root
 
 # Set default environment variables (can be overridden at runtime)
