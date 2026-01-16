@@ -85,7 +85,7 @@ def home():
         return render_template('phrase.html', phrase=phrase, selection_time=data.get('selection_time'), total_time=end_time - start_time)
     except Exception as e:
         FAILED_REQUESTS.inc()
-        app.logger.warn("/get_phrase failed.")
+        app.logger.warning("/get_phrase failed.")
         return jsonify({'error': str(e)}), 500
     
 
