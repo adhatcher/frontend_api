@@ -1,0 +1,113 @@
+version: '3'
+
+tasks:
+
+  default:
+    aliases: [all, make]
+    deps:
+      - setup
+      - deploy
+
+  check-kind:
+    desc: Check if the kind kubernetes cluster is running
+    cmds:
+      - docker ps --filter name=gwkc-1-control-plane --format "{{.Status}}" 
+    silent: true
+  
+  check-kubectl:
+    desc: Check if kubectl is installed
+    cmds:
+      - kubectl version --client
+    silent: true
+
+  check-kustomize:
+    desc: Check if kustomize is installed, if not, install it via brew
+    cmds:
+      - |
+        if ! command -v kustomize &> /dev/null
+        then
+          echo "kustomize could not be found, installing via brew..."
+          brew install kustomize
+        else
+          echo "kustomize is already installed"
+          kustomize version
+        fi
+    silent: false
+
+  create-namespace:
+    desc: create phrases namespace
+    cmds:
+      - kubectl create namespace phrases || echo "namespace phrases already exists"
+    silent: false
+  
+  clean-namespace:
+    desc: delete phrases namespace
+    cmds:
+      - kubectl delete namespace phrases || echo "namespace phrases does not exist"
+    silent: false
+
+  build-image:
+    desc: Build the frontend docker image
+    cmds:
+      - docker build -t frontend:v1 .
+    silent: false
+
+  clean-image:
+    desc: Remove the frontend docker image
+    cmds:
+      - docker rmi frontend:v1 || echo "image frontend:v1 does not exist"
+    silent: false
+
+  load-image:
+    desc: Load the frontend docker image into the kind cluster
+    cmds:
+      - kind load docker-image frontend:v1 --name gwkc-1
+    silent: false
+
+  deploy-app:
+    desc: Apply the kustomize manifests to the kind cluster
+    cmds:
+      - kubectl apply -k kube/kustomize/base -n phrases
+    silent: false
+
+  open-app:
+    desc: Open the frontend application in the default web browser
+    cmds:
+      - open http://phrases.local/
+
+  clean-app:
+    desc: Delete the kustomize manifests from the kind cluster
+    cmds:
+      - kubectl delete -k kube/kustomize/base -n phrases
+    silent: false
+
+  clean:
+    aliases: [delete]
+    ignore_error: true
+    desc: Clean up the frontend deployment, image, and namespace
+    cmds:
+      - task: clean-app
+      - task: clean-image
+    silent: false
+
+  deploy:
+    desc: Deploy the frontend application to the kind cluster
+    deps:
+      - check-kind
+      - check-kubectl
+      - check-kustomize
+    cmds:
+      - task: build-image
+      - task: load-image 
+      - task: create-namespace
+      - task: deploy-app
+      - task: open-app
+    silent: false 
+
+  setup:  
+    desc: Setup the kind cluster with the frontend application
+    cmds:
+      - task: check-kind
+      - task: check-kubectl
+      - task: check-kustomize
+    silent: false

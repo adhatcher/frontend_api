@@ -12,7 +12,8 @@ app = Flask(__name__)
 # Get the API host and port from environment variables (default to zeus.local:6060)
 API_HOST = os.getenv("API_HOST", "backend")
 API_PORT = os.getenv("API_PORT", "7070")
-API_URL = f"http://{API_HOST}:{API_PORT}/random_phrase"
+API_URL = os.getenv("API_URL", "backend/random_phrase")
+API_URL = f"http://{API_HOST}:{API_PORT}/{API_URL}"
 
 # Prometheus metrics
 REQUEST_COUNT = Counter('frontend_request_count', 'Total number of requests')
