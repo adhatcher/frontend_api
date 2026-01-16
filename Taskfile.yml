@@ -73,7 +73,7 @@ tasks:
   open-app:
     desc: Open the frontend application in the default web browser
     cmds:
-      - open http://phrases.local/
+      - open http://phrases.local/get_phrase
 
   clean-app:
     desc: Delete the kustomize manifests from the kind cluster
