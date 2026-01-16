@@ -18,7 +18,7 @@ RUN mkdir /logs && chmod 777 /logs && \
 
 # Set default environment variables (can be overridden at runtime)
 ENV FLASK_HOST=0.0.0.0
-ENV FLASK_PORT=6060
+ENV FLASK_PORT=8080
 ENV API_HOST=backend
 ENV API_PORT=7070
 

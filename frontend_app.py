@@ -92,6 +92,6 @@ def home():
 if __name__ == '__main__':
     # Get Flask app host and port from environment variables
     FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
-    FLASK_PORT = int(os.getenv("FLASK_PORT", "6060"))
+    FLASK_PORT = int(os.getenv("FLASK_PORT", "8080"))
     
     app.run(debug=True, host=FLASK_HOST, port=FLASK_PORT)
