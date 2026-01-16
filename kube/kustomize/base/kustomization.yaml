@@ -7,9 +7,10 @@ images:
 - name: frontend
   newTag: v1
   newName: frontend
-  
+
 resources:
 - configmap.yaml
 - deployment.yaml
+- hpa.yml
 - service.yaml
 - httproute.yaml

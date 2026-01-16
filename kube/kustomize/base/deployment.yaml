@@ -5,6 +5,11 @@ metadata:
   namespace: ns_name
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   selector:
     matchLabels:
       app: frontend
@@ -12,6 +17,7 @@ spec:
     metadata:
       labels:
         app: frontend
+        project: phrases
     spec:
       containers:
       - name: frontend
