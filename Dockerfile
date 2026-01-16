@@ -19,8 +19,8 @@ RUN mkdir /logs && chmod 777 /logs && \
 # Set default environment variables (can be overridden at runtime)
 ENV FLASK_HOST=0.0.0.0
 ENV FLASK_PORT=6060
-ENV API_HOST=zeus.local
-ENV API_PORT=6061
+ENV API_HOST=backend
+ENV API_PORT=7070
 
 # Expose the port (not required but good practice)
 EXPOSE ${FLASK_PORT}
