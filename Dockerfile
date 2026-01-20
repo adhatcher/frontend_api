@@ -2,8 +2,6 @@
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # build-essential \
-    # curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -15,7 +13,7 @@ LABEL maintainer="Aaron Hatcher <aaron@aaronhatcher.com>"
 LABEL description="Flask application with configurable host and port using environment variables."
 
 # Copy the application files
-COPY . .
+COPY ./src/ .
 
 # Install dependencies
 RUN mkdir /logs && chmod 777 /logs && \

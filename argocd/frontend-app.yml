@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/adhatcher/frontend_api.git'
+    targetRevision: HEAD
+    path: kube/kustomize/base
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: phrases
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - CreateNamespace=true 
