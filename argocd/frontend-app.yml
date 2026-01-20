@@ -19,3 +19,15 @@ spec:
     syncOptions:
       - ApplyOutOfSyncOnly=true
       - CreateNamespace=true 
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: frontend-api-repo
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: git
+  url: 'https://github.com/adhatcher/frontend_api'
