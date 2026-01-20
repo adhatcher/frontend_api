@@ -31,3 +31,5 @@ metadata:
 stringData:
   type: git
   url: 'https://github.com/adhatcher/frontend_api'
+  project: default
+  name: frontend_app_repo
