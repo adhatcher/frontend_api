@@ -2,26 +2,36 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: frontend
-  namespace: ns_name
+  namespace: phrases
 spec:
-  parentRefs:
-    - name: gateway
-      sectionName: http
-      namespace: gateway
   hostnames:
-    - "phrases.local"
+  - phrases.local
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: gateway
+    namespace: gateway
+    sectionName: http
   rules:
-    - matches:
-        - path:
-            type: PathPrefix # Matches any path starting with /coffee
-            value: "/"
-      backendRefs:
-        - name: frontend
-          port: 8080
-    - matches:
-        - path:
-            type: PathPrefix # Matches any path starting with /coffee
-            value: "/metrics"
-      backendRefs:
-        - name: frontend
-          port: 8080
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: frontend
+      namespace: phrases
+      port: 8080
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: frontend
+      namespace: phrases
+      port: 8080
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /metrics
