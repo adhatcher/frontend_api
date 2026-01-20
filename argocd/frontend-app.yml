@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/adhatcher/frontend_api.git'
+    repoURL: 'https://github.com/adhatcher/frontend_api'
     targetRevision: HEAD
     path: kube/kustomize/base
   destination:
