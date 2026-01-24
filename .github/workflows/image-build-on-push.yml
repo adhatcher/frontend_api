@@ -1,0 +1,19 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-push-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: docker/build-push-action@v6.18.0
+        with:
+          context: ./Dockerfile
+          push: true
+          tags: $(date +%s)
+          registry: https://hub.docker.com/repository/docker/adhatcher/frontend_app
+      
