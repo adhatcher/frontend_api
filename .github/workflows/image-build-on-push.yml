@@ -14,6 +14,6 @@ jobs:
         with:
           context: ./Dockerfile
           push: true
-          tags: $(date +%s)
+          tags: latest
           registry: https://hub.docker.com/repository/docker/adhatcher/frontend_app
       
