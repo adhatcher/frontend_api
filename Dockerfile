@@ -1,24 +1,32 @@
-# Use the official Python image as a base image
+# ---------- builder ----------
+FROM python:3.12-slim AS builder
+
+WORKDIR /app
+
+# Copy dependency manifests first for better build caching
+COPY pyproject.toml poetry.lock ./
+
+RUN pip install --no-cache-dir poetry \
+    && poetry config virtualenvs.create false \
+    && poetry install --only main --no-root
+
+COPY ./src/ .
+
+# ---------- runtime ----------
 FROM python:3.12-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# Set the working directory in the container
 WORKDIR /app
 
 # Add metadata
 LABEL maintainer="Aaron Hatcher <aaron@aaronhatcher.com>"
 LABEL description="Flask application with configurable host and port using environment variables."
 
-# Copy the application files
-COPY ./src/ .
+RUN mkdir /logs && chmod 775 /logs
 
-# Install dependencies
-RUN mkdir /logs && chmod 777 /logs && \
-    pip install --no-cache-dir poetry && \
-    poetry install --only main --no-root
+# Copy installed deps and app source
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /app /app
 
 # Set default environment variables (can be overridden at runtime)
 ENV FLASK_HOST=0.0.0.0
@@ -31,4 +39,4 @@ ENV API_URL=backend/random_phrase
 EXPOSE ${FLASK_PORT}
 
 # Command to run the application
-CMD ["poetry", "run", "python", "frontend_app.py"]
+CMD ["python", "frontend_app.py"]
