@@ -40,3 +40,4 @@ EXPOSE ${FLASK_PORT}
 
 # Command to run the application
 CMD ["python", "frontend_app.py"]
+
