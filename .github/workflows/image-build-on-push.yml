@@ -1,19 +1,19 @@
-name: Build and Push Docker Image
+name: Docker Image CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build-push-image:
+
+  build:
+
     runs-on: ubuntu-latest
 
     steps:
-      - uses: docker/build-push-action@v6.18.0
-        with:
-          context: Dockerfile
-          push: true
-          tags: latest
-          registry: https://hub.docker.com/repository/docker/adhatcher/frontend_app
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
       
