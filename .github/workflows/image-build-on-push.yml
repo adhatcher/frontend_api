@@ -31,7 +31,7 @@ jobs:
         CURRENT_DATE=${{ steps.date.outputs.date }}
         
         # Fetch tags from the remote repository
-        LATEST_TAG=$(git ls-remote --tags https://github.com/adhatcher/frontend.git | \
+        LATEST_TAG=$(git ls-remote --tags https://github.com/adhatcher/frontend_api.git | \
           grep -oP "$CURRENT_DATE-\K\d+" | \
           sort -n | \
           tail -1)
