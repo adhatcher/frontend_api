@@ -1,0 +1,40 @@
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: frontend-api
+  namespace: default
+spec:
+  components:
+    - name: frontend-api
+      type: webservice
+      properties:
+        image: ghcr.io/adhatcher/frontend_api:latest  # Will be updated by CI
+        port: 8080
+        env:
+          - name: ENVIRONMENT
+            value: production
+
+  traits:
+    - type: ingress
+      properties:
+        domain: api.example.com
+        http:
+          /: 8080
+
+    - type: scaler
+      properties:
+        replicas: 3
+
+    - type: resource
+      properties:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+        requests:
+          cpu: "250m"
+          memory: "256Mi"
+
+    - type: rollout
+      properties:
+        numBatches: 2
+        interval: 30s

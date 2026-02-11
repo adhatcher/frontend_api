@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend-api
+  namespace: argocd
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/adhatcher/frontend_api
+    targetRevision: main
+    path: deploy/kubevela
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Optional: Set up webhook or polling for faster detection
+  revisionHistoryLimit: 10

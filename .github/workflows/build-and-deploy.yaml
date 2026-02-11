@@ -1,0 +1,72 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # - name: Update image tag in deployment manifest
+      #   run: |
+      #     # Update the image tag in your KubeVela application manifest
+      #     sed -i "s|image: .*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" \
+      #       deploy/kubevela/app.yaml
+          
+      #     cat deploy/kubevela/app.yaml
+      - name: Update image tag with Kustomize
+        run: |
+          cd deploy/kubevela
+          kustomize edit set image ghcr.io/adhatcher/frontend_api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          git add kustomization.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898752+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update image tag to ${{ github.sha }}"
+          git push
+
+      - name: Commit and push updated manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898752+github-actions[bot]@users.noreply.github.com"
+          git add deploy/kubevela/app.yaml
+          git diff --quiet && git diff --staged --quiet || (
+            git commit -m "chore: update image tag to ${{ github.sha }}"
+            git push
+          )
