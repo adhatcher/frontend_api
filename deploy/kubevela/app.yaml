@@ -2,7 +2,7 @@ apiVersion: core.oam.dev/v1beta1
 kind: Application
 metadata:
   name: frontend-api
-  namespace: default
+  namespace: phrases
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
