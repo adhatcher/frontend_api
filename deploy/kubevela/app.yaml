@@ -8,7 +8,7 @@ spec:
     - name: frontend-api
       type: webservice
       properties:
-        image: ghcr.io/adhatcher/frontend_api:08f120609a660b023182fa27fa8a9d5ef6273a32
+        image: ghcr.io/adhatcher/frontend_api:2b5d0d8a914fe63b1f594dbc5eb2bc1c3fbfafc3
         port: 8080
         env:
           - name: ENVIRONMENT
