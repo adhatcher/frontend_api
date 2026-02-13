@@ -53,7 +53,7 @@ jobs:
       #     cat deploy/kubevela/app.yaml
       - name: Update image tag with Kustomize
         run: |
-          cd deploy/kubevela
+          cd deploy
           kustomize edit set image ghcr.io/adhatcher/frontend_api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           git add kustomization.yaml
           git config user.name "github-actions[bot]"
