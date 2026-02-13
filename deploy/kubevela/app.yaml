@@ -8,6 +8,8 @@ spec:
     - name: frontend-api
       type: webservice
       properties:
+        labels:
+          app: frontend-api
         image: ghcr.io/adhatcher/frontend_api:2b5d0d8a914fe63b1f594dbc5eb2bc1c3fbfafc3
         port: 8080
         env:
@@ -23,5 +25,24 @@ spec:
               cpu: "500m"
               memory: "512Mi"
             requests:
-              cpu: "250m"
-              memory: "256Mi"
+              cpu: "60m"
+              memory: "128Mi"
+        - type: hpa
+          properties:
+            min: 1
+            max: 5
+            cpu:
+              type: AverageValue
+              value: 100
+            mem:
+              type: AverageValue
+              value: 256
+        - type: expose
+          properties:
+            type: ClusterIP
+            matchLabels:
+              app: frontend-api
+            ports:
+              - name: http
+                port: 8080
+                protocol: TCP
