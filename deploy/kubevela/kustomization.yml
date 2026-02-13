@@ -3,7 +3,3 @@ kind: Kustomization
 
 resources:
   - app.yaml
-
-images:
-  - name: ghcr.io/adhatcher/frontend_api
-    newTag: latest  # Will be updated by CI

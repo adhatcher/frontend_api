@@ -11,7 +11,7 @@ tasks:
   check-kind:
     desc: Check if the kind kubernetes cluster is running
     cmds:
-      - docker ps --filter name=gwkc-1-control-plane --format "{{.Status}}" 
+      - docker ps --filter name=zeus-control-plane --format "{{.Status}}" 
     silent: true
   
   check-kubectl:
@@ -61,7 +61,7 @@ tasks:
   load-image:
     desc: Load the frontend docker image into the kind cluster
     cmds:
-      - kind load docker-image frontend:v1 --name gwkc-1
+      - kind load docker-image frontend:v1 --name zeus
     silent: false
 
   deploy-app:

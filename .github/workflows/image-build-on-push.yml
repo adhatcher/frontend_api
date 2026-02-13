@@ -1,14 +1,11 @@
-name: Docker Image CI
+name: Docker Image CI (disabled)
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: adhatcher/frontend
+  IMAGE_NAME: adhatcher/frontend_api
 
 jobs:
   build:

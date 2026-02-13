@@ -4,10 +4,10 @@ metadata:
   name: frontend-api
   namespace: argocd
 spec:
-  project: default
+  project: frontend-api
   
   source:
-    repoURL: https://github.com/adhatcher/frontend_api
+    repoURL: https://github.com/adhatcher/frontend_api.git
     targetRevision: main
     path: deploy/kubevela
 

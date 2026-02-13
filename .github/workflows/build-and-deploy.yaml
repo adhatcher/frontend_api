@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - develop
 
 env:
   REGISTRY: ghcr.io
@@ -44,28 +43,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # - name: Update image tag in deployment manifest
-      #   run: |
-      #     # Update the image tag in your KubeVela application manifest
-      #     sed -i "s|image: .*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" \
-      #       deploy/kubevela/app.yaml
-          
-      #     cat deploy/kubevela/app.yaml
-      - name: Update image tag with Kustomize
+      - name: Update deployed image tag
         run: |
-          cd deploy
-          kustomize edit set image ghcr.io/adhatcher/frontend_api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          git add kustomization.yaml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898752+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: update image tag to ${{ github.sha }}"
-          git push
-
-      - name: Commit and push updated manifest
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898752+github-actions[bot]@users.noreply.github.com"
+          sed -i "s|image: ghcr.io/adhatcher/frontend_api:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" deploy/kubevela/app.yaml
           git add deploy/kubevela/app.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898752+github-actions[bot]@users.noreply.github.com"
           git diff --quiet && git diff --staged --quiet || (
             git commit -m "chore: update image tag to ${{ github.sha }}"
             git push
