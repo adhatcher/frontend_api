@@ -3,4 +3,5 @@ kind: Kustomization
 
 resources:
   - policies/traits/trait-httproute.yaml
+  - policies/traits/trait-health-probes.yaml
   - app.yaml

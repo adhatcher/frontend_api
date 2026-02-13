@@ -36,6 +36,24 @@ spec:
             mem:
               type: AverageValue
               value: 268435456
+        - type: health-probes
+          properties:
+            livenessProbe:
+              httpGet:
+                path: /metrics
+                port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 2
+              failureThreshold: 3
+            readinessProbe:
+              httpGet:
+                path: /metrics
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 5
+              timeoutSeconds: 2
+              failureThreshold: 3
         - type: storage
           properties:
             configMap:
