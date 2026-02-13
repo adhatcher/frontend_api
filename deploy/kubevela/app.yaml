@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: frontend-api
   namespace: default
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   components:
     - name: frontend-api
@@ -43,3 +45,9 @@ spec:
               - name: http
                 port: 8080
                 protocol: TCP
+        - type: httproute
+          properties:
+            hostname: phrases.zeus
+            service:
+              name: frontend-api
+              port: 8080
