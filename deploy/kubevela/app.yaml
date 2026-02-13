@@ -12,7 +12,7 @@ spec:
       properties:
         labels:
           app: frontend-api
-        image: ghcr.io/adhatcher/frontend_api:a371dbbac8378d2423464da27e403570f9f431f9
+        image: ghcr.io/adhatcher/frontend_api:6e452814874df318927e66441ece68c5d462ebfe
         port: 8080
         env:
           - name: ENVIRONMENT
