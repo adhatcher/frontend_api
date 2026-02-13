@@ -4,7 +4,7 @@ metadata:
   name: frontend-api
   namespace: argocd
 spec:
-  project: frontend-api
+  project: phrases
   
   source:
     repoURL: https://github.com/adhatcher/frontend_api.git

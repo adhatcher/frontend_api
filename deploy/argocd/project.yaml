@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: frontend-api
+  name: phrases
   namespace: argocd
 spec:
   description: Frontend API deployment project
