@@ -2,3 +2,4 @@
 ._.git*
 ._.git
 ._Dockerfile
+.DS_Store
