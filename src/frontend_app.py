@@ -49,6 +49,10 @@ werkzeug_logger.addHandler(handler)
 def metrics():
     return Response(generate_latest(REGISTRY), mimetype='text/plain')
 
+@app.route('/healthz', methods=['GET'])
+def healthz():
+    return jsonify({'status': 'ok'}), 200
+
 @app.route('/get_phrase', methods=['GET'])
 @REQUEST_COUNT.count_exceptions()
 @PHRASE_REQUEST_LATENCY.time()
