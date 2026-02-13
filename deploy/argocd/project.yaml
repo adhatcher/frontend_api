@@ -7,6 +7,7 @@ spec:
   description: Frontend API deployment project
   sourceRepos:
     - https://github.com/adhatcher/frontend_api.git
+    - https://github.com/adhatcher/random_phrase_api.git
   destinations:
     - namespace: default
       server: https://kubernetes.default.svc
