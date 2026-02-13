@@ -2,6 +2,4 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - policies/traits/trait-httproute.yaml
-  - policies/traits/trait-health-probes.yaml
   - app.yaml
