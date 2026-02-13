@@ -36,7 +36,7 @@ spec:
               value: 100
             mem:
               type: AverageValue
-              value: 256
+              value: 256Mi
         - type: expose
           properties:
             type: ClusterIP
