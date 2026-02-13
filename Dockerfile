@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir poetry \
     && poetry install --only main --no-root
 
 COPY ./src/ .
+COPY ./templates/ ./templates/
+COPY ./static/ ./static/
 
 # ---------- runtime ----------
 FROM python:3.12-slim
@@ -40,4 +42,3 @@ EXPOSE ${FLASK_PORT}
 
 # Command to run the application
 CMD ["python", "frontend_app.py"]
-
