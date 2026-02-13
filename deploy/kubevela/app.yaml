@@ -47,6 +47,7 @@ spec:
                 protocol: TCP
         - type: httproute
           properties:
+            routeName: frontend-api-route
             hostname: phrases.zeus
             service:
               name: frontend-api

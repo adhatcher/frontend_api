@@ -18,7 +18,7 @@ spec:
           apiVersion: "gateway.networking.k8s.io/v1"
           kind:       "HTTPRoute"
           metadata: {
-            name:      context.name
+            name:      parameter.routeName
             namespace: context.namespace
           }
           spec: {
@@ -43,6 +43,7 @@ spec:
           }
         }
         parameter: {
+          routeName: *"\(context.name)-route" | string
           hostname: string
           path: *"/" | string
           gateway: {
