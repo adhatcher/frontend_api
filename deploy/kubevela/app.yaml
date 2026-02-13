@@ -16,7 +16,7 @@ spec:
         port: 8080
         env:
           - name: ENVIRONMENT
-            value: development
+            value: production
       traits:
         - type: resource
           properties:
