@@ -16,9 +16,6 @@ spec:
           - name: ENVIRONMENT
             value: production
       traits:
-        - type: scaler
-          properties:
-            replicas: 3
         - type: resource
           properties:
             limits:
