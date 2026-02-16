@@ -22,4 +22,4 @@ docker run -d --rm -p 8080:8080 \
     -e API_PORT=7070 \
     --network app-net
     <container image>
-```
+``` 
