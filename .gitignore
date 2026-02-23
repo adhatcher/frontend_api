@@ -3,3 +3,4 @@
 ._.git
 ._Dockerfile
 .DS_Store
+.vscode/*
