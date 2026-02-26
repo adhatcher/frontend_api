@@ -135,7 +135,14 @@ def _api_get_json(repo: str, token: str, path: str, params: dict[str, Any] | Non
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"GitHub API request failed ({exc.code}): {detail}") from exc
+        hint = ""
+        if exc.code == 403 and "Resource not accessible by integration" in detail:
+            hint = (
+                " Hint: this token cannot read Dependabot alerts. "
+                "Use a token with Dependabot alerts read permission "
+                "(for example, set DEPENDABOT_ALERTS_TOKEN secret)."
+            )
+        raise RuntimeError(f"GitHub API request failed ({exc.code}): {detail}{hint}") from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"GitHub API request failed: {exc.reason}") from exc
 

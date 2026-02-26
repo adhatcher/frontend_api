@@ -44,15 +44,42 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Precheck Dependabot alerts API access
+        env:
+          ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          RESPONSE_FILE="$(mktemp)"
+          HTTP_CODE="$(
+            curl -sS \
+              -o "$RESPONSE_FILE" \
+              -w "%{http_code}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $ALERTS_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${{ github.repository }}/dependabot/alerts?state=open&per_page=1"
+          )"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Dependabot alerts API access check passed." >> "$GITHUB_STEP_SUMMARY"
+            rm -f "$RESPONSE_FILE"
+            exit 0
+          fi
+
+          echo "Dependabot alerts API access check failed (HTTP $HTTP_CODE)." | tee -a "$GITHUB_STEP_SUMMARY"
+          cat "$RESPONSE_FILE" | tee -a "$GITHUB_STEP_SUMMARY"
+          rm -f "$RESPONSE_FILE"
+          echo "Use a token with Dependabot alerts read permission via DEPENDABOT_ALERTS_TOKEN." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
       - name: Discover candidate alerts
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN || secrets.GITHUB_TOKEN }}
           SEVERITY_THRESHOLD: ${{ inputs.severity_threshold || 'high' }}
           MAX_ALERTS: ${{ inputs.max_alerts || '10' }}
         run: |
           python3 scripts/security_remediation_agent.py \
             --repo "${{ github.repository }}" \
-            --token "$GITHUB_TOKEN" \
+            --token "$ALERTS_TOKEN" \
             --severity-threshold "$SEVERITY_THRESHOLD" \
             --output alerts.json \
             list \
@@ -103,7 +130,7 @@ jobs:
       - name: Remediate selected alert
         id: remediate
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN || secrets.GITHUB_TOKEN }}
           SEVERITY_THRESHOLD: ${{ inputs.severity_threshold || 'high' }}
           DRY_RUN: ${{ inputs.dry_run || false }}
         run: |
@@ -115,7 +142,7 @@ jobs:
 
           python3 scripts/security_remediation_agent.py \
             --repo "${{ github.repository }}" \
-            --token "$GITHUB_TOKEN" \
+            --token "$ALERTS_TOKEN" \
             --severity-threshold "$SEVERITY_THRESHOLD" \
             --output remediation.json \
             remediate \
