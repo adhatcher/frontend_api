@@ -47,18 +47,17 @@ spec:
             containerName: "frontend-api"
             httpGet:
               path: /healthz
-              scheme: "HTTP"
               port: 8080
             periodSeconds: 4
             failureThreshold: 4 
-            initialDelaySeconds: 10
+            initialDelaySeconds: 20
         - type: health-probes
           properties:
             livenessProbe:
               httpGet:
                 path: /healthz
                 port: 8080
-              initialDelaySeconds: 10
+              initialDelaySeconds: 20
               periodSeconds: 10
               timeoutSeconds: 2
               failureThreshold: 3
@@ -66,7 +65,7 @@ spec:
               httpGet:
                 path: /healthz
                 port: 8080
-              initialDelaySeconds: 5
+              initialDelaySeconds: 20
               periodSeconds: 5
               timeoutSeconds: 2
               failureThreshold: 3
