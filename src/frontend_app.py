@@ -13,7 +13,8 @@ from prometheus_client import REGISTRY, Counter, Histogram, generate_latest
 from requests import RequestException
 
 
-BASE_DIR = Path(__file__).resolve().parents[1]
+CURRENT_DIR = Path(__file__).resolve().parent
+BASE_DIR = CURRENT_DIR if (CURRENT_DIR / "templates").exists() else CURRENT_DIR.parent
 app = Flask(
     __name__,
     template_folder=str(BASE_DIR / "templates"),
