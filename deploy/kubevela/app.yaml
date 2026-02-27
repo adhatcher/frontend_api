@@ -42,16 +42,18 @@ spec:
             mem:
               type: Utilization
               value: 90
+        - type: startup-probe
+          properties:
+            containerName: "frontend-api"
+            httpGet:
+              path: /healthz
+              scheme: "HTTP"
+              port: 8080
+            periodSeconds: 4
+            failureThreshold: 4 
+            initialDelaySeconds: 10
         - type: health-probes
           properties:
-            startupProbe:
-              httpGet:
-                path: /healthz
-                port: 8080
-              initialDelaySeconds: 30
-              periodSeconds: 5
-              timeoutSeconds: 2
-              failureThreshold: 12
             livenessProbe:
               httpGet:
                 path: /healthz
