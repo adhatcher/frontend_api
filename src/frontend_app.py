@@ -1,33 +1,70 @@
-from flask import Flask, jsonify, render_template, Response
-import requests
-import time
-import os
-from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
+"""Flask frontend for retrieving and rendering phrases from a backend API."""
+
 import logging
+import os
+import time
 from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
+from urllib.parse import urlunparse
+
+import requests
+from flask import Flask, Response, jsonify, render_template
+from prometheus_client import REGISTRY, Counter, Histogram, generate_latest
+from requests import RequestException
 
 
-app = Flask(__name__)
+BASE_DIR = Path(__file__).resolve().parents[1]
+app = Flask(
+    __name__,
+    template_folder=str(BASE_DIR / "templates"),
+    static_folder=str(BASE_DIR / "static"),
+)
 
-# Get the API host and port from environment variables (default to zeus.local:6060)
-API_HOST = os.getenv("API_HOST", "backend")
-API_PORT = os.getenv("API_PORT", "7070")
-API_URL = os.getenv("API_URL", "backend/random_phrase")
-API_URL = f"http://{API_HOST}:{API_PORT}/{API_URL}"
+def _as_bool(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _build_api_url() -> str:
+    explicit_url = os.getenv("API_URL", "").strip()
+    if explicit_url.startswith(("http://", "https://")):
+        return explicit_url
+
+    host = os.getenv("API_HOST", "backend")
+    port = os.getenv("API_PORT", "7070")
+    path = explicit_url or os.getenv("API_PATH", "random_phrase")
+    normalized_path = "/" + path.strip("/")
+    return urlunparse(("http", f"{host}:{port}", normalized_path, "", "", ""))
+
+
+API_URL = _build_api_url()
+REQUEST_TIMEOUT_SECONDS = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "3.0"))
+FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
+FLASK_PORT = int(os.getenv("FLASK_PORT", "8080"))
+FLASK_DEBUG = _as_bool(os.getenv("FLASK_DEBUG"), default=False)
 
 # Prometheus metrics
-REQUEST_COUNT = Counter('frontend_request_count', 'Total number of requests')
-PHRASE_REQUEST_LATENCY = Histogram('phrase_request_latency_seconds', 'Time taken for a request to the Flask API')
-RENDER_LATENCY = Histogram('render_latency_seconds', 'Time taken to render the phrase')
-FAILED_REQUESTS = Counter('frontend_failed_requests', 'Number of failed requests')
-PHRASE_COUNTER = Counter('frontend_phrase_counter', 'Count of each phrase', ['phrase'])
+REQUEST_COUNT = Counter("frontend_request_count", "Total number of requests")
+PHRASE_REQUEST_LATENCY = Histogram(
+    "phrase_request_latency_seconds", "Time taken for a request to the Flask API"
+)
+RENDER_LATENCY = Histogram(
+    "render_latency_seconds", "Time taken to render the phrase view"
+)
+FAILED_REQUESTS = Counter("frontend_failed_requests", "Number of failed requests")
+PHRASE_COUNTER = Counter("frontend_phrase_counter", "Count of each phrase", ["phrase"])
 
-log_dir = "/logs"
-os.makedirs(log_dir, exist_ok=True)
+LOG_DIR = os.getenv("LOG_DIR", "logs")
+handler: logging.Handler
+try:
+    os.makedirs(LOG_DIR, exist_ok=True)
+    log_file = os.path.join(LOG_DIR, "frontend_app.log")
+    handler = TimedRotatingFileHandler(log_file, when="D", interval=1, backupCount=4)
+except OSError:
+    # Fall back to stderr if filesystem paths are not writable.
+    handler = logging.StreamHandler()
 
-# Configure log file handler
-log_file = os.path.join(log_dir, "frontend_app.log")
-handler = TimedRotatingFileHandler(log_file, when="D", interval=1, backupCount=4)
 handler.setLevel(logging.INFO)
 
 # Set log format
@@ -42,61 +79,86 @@ app.logger.setLevel(logging.INFO)
 
 # Redirect Werkzeug logs (Flask's built-in server logs)
 werkzeug_logger = logging.getLogger("werkzeug")
-werkzeug_logger.setLevel(logging.DEBUG)
+werkzeug_logger.setLevel(logging.INFO)
 werkzeug_logger.addHandler(handler)
 
-@app.route('/metrics', methods=['GET'])
+session = requests.Session()
+
+
+def _fetch_phrase_data() -> dict[str, float | str | None]:
+    start_time = time.perf_counter()
+    response = session.get(API_URL, timeout=REQUEST_TIMEOUT_SECONDS)
+    response.raise_for_status()
+    payload = response.json()
+    phrase = str(payload.get("phrase", "No phrase returned"))
+    selection_time = payload.get("selection_time")
+    total_time = round(time.perf_counter() - start_time, 4)
+    PHRASE_COUNTER.labels(phrase=phrase).inc()
+    return {
+        "phrase": phrase,
+        "selection_time": selection_time,
+        "total_time": total_time,
+    }
+
+
+@app.after_request
+def _apply_security_headers(response: Response) -> Response:
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; img-src 'self' data:; style-src 'self'; "
+        "script-src 'self'; base-uri 'none'; form-action 'self'"
+    )
+    return response
+
+
+def _render_phrase_page() -> tuple[str, int]:
+    try:
+        app.logger.info("Fetching phrase from backend endpoint: %s", API_URL)
+        phrase_data = _fetch_phrase_data()
+        return render_template("phrase.html", **phrase_data), 200
+    except (RequestException, ValueError) as exc:
+        FAILED_REQUESTS.inc()
+        app.logger.warning("Failed to fetch phrase: %s", exc)
+        return (
+            render_template(
+                "phrase.html",
+                phrase="Unable to fetch phrase right now.",
+                selection_time=None,
+                total_time=None,
+                error="Backend service unavailable. Please try again.",
+            ),
+            502,
+        )
+
+
+@app.route("/metrics", methods=["GET"])
 def metrics():
-    return Response(generate_latest(REGISTRY), mimetype='text/plain')
+    """Expose Prometheus metrics for scraping."""
+    return Response(generate_latest(REGISTRY), mimetype="text/plain")
 
-@app.route('/healthz', methods=['GET'])
+
+@app.route("/healthz", methods=["GET"])
 def healthz():
-    return jsonify({'status': 'ok'}), 200
+    """Return readiness status for health checks."""
+    return jsonify({"status": "ok"}), 200
 
-@app.route('/get_phrase', methods=['GET'])
+
+@app.route("/get_phrase", methods=["GET"])
 @REQUEST_COUNT.count_exceptions()
 @PHRASE_REQUEST_LATENCY.time()
 def get_phrase():
-    try:
-        app.logger.info("/get_phrase called.")
-        start_time = time.time()
-        response = requests.get(API_URL)
-        if response.status_code != 200:
-            raise Exception(f'Failed to get phrase: {response.status_code}')
-        data = response.json()
-        phrase = data.get('phrase', 'No phrase returned')
-        PHRASE_COUNTER.labels(phrase=phrase).inc()
-        end_time = time.time()
+    """Render a page with the latest phrase from the backend API."""
+    return _render_phrase_page()
 
-        return render_template('phrase.html', phrase=phrase, selection_time=data.get('selection_time'), total_time=end_time - start_time)
-    except Exception as e:
-        FAILED_REQUESTS.inc()
-        return jsonify({'error': str(e)}), 500
 
-@app.route('/', methods=['GET'])
+@app.route("/", methods=["GET"])
 @RENDER_LATENCY.time()
 def home():
-    try:
-        app.logger.info("/get_phrase called.")
-        start_time = time.time()
-        response = requests.get(API_URL)
-        if response.status_code != 200:
-            raise Exception(f'Failed to get phrase: {response.status_code}')
-        data = response.json()
-        phrase = data.get('phrase', 'No phrase returned')
-        PHRASE_COUNTER.labels(phrase=phrase).inc()
-        end_time = time.time()
-        app.logger.info("/get_phrase successful.")
-        return render_template('phrase.html', phrase=phrase, selection_time=data.get('selection_time'), total_time=end_time - start_time)
-    except Exception as e:
-        FAILED_REQUESTS.inc()
-        app.logger.warning("/get_phrase failed.")
-        return jsonify({'error': str(e)}), 500
-    
+    """Render the landing page."""
+    return render_template("index.html"), 200
 
-if __name__ == '__main__':
-    # Get Flask app host and port from environment variables
-    FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
-    FLASK_PORT = int(os.getenv("FLASK_PORT", "8080"))
-    
-    app.run(debug=True, host=FLASK_HOST, port=FLASK_PORT)
+
+if __name__ == "__main__":
+    app.run(debug=FLASK_DEBUG, host=FLASK_HOST, port=FLASK_PORT)
