@@ -50,7 +50,7 @@ jobs:
 
       - name: Update deployed image tag
         run: |
-          sed -i "s|image: ghcr.io/adhatcher/frontend_api:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" deploy/kubevela/app.yaml
+          sed -E -i "s|^([[:space:]]*image:[[:space:]]*).*$|\1${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" deploy/kubevela/app.yaml
           git add deploy/kubevela/app.yaml
           git config user.name "github-actions[bot]"
           git config user.email "41898752+github-actions[bot]@users.noreply.github.com"

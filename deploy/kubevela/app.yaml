@@ -14,7 +14,7 @@ spec:
           app: frontend-api
         image: ghcr.io/adhatcher/frontend_api:a47166ea99f354f809fa3d6a92f7e15b178439c0
         memory: 80Mi
-        cpu: "0.5"
+        cpu: "0.05"
         port: 8080
         topologySpreadConstraints:
           - maxSkew: 1
@@ -40,7 +40,7 @@ spec:
               type: Utilization
               value: 80
             mem:
-              type: AverageValue
+              type: Utilization
               value: 90
         - type: health-probes
           properties:
