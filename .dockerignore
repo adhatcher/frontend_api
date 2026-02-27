@@ -4,6 +4,7 @@
 .idea
 .vscode
 .DS_Store
+._*
 
 __pycache__/
 *.py[cod]
@@ -16,6 +17,8 @@ __pycache__/
 .venv/
 venv/
 env/
+.venv-lint/
+.venv-skill/
 
 .pytest_cache/
 .mypy_cache/
@@ -23,11 +26,15 @@ env/
 .tox/
 .nox/
 .coverage
+coverage.*
 coverage.xml
 htmlcov/
+reports/
 
 build/
 dist/
 *.log
+logs/
+/logs/
 
 node_modules/

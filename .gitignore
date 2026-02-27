@@ -1,6 +1,48 @@
-._*
-._.git*
-._.git
-._Dockerfile
+# OS/editor
 .DS_Store
-.vscode/*
+._*
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+.venv-lint/
+.venv-skill/
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+
+# Coverage/test artifacts
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+reports/
+
+# Build/distribution artifacts
+build/
+dist/
+
+# Runtime/log files
+*.log
+logs/
+/logs/
+
+# Env files
+.env
+.env.*
