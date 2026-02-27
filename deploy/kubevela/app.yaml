@@ -14,7 +14,7 @@ spec:
           app: frontend-api
         image: ghcr.io/adhatcher/frontend_api:6fd22fa9767e7de6244afb9ea8cf450bc6683228
         memory: 80Mi
-        cpu: "0.05"
+        cpu: "0.08"
         port: 8080
         topologySpreadConstraints:
           - maxSkew: 1
@@ -44,6 +44,14 @@ spec:
               value: 90
         - type: health-probes
           properties:
+            startupProbe:
+              httpGet:
+                path: /healthz
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 5
+              timeoutSeconds: 2
+              failureThreshold: 12
             livenessProbe:
               httpGet:
                 path: /healthz
