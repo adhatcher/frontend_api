@@ -44,9 +44,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Precheck Dependabot alerts API access
+      - name: Select alerts API token
         env:
-          ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN || secrets.GITHUB_TOKEN }}
+          DEPENDABOT_ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN }}
+          GITHUB_TOKEN_FALLBACK: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$DEPENDABOT_ALERTS_TOKEN" ]; then
+            echo "ALERTS_TOKEN=$DEPENDABOT_ALERTS_TOKEN" >> "$GITHUB_ENV"
+            echo "Using DEPENDABOT_ALERTS_TOKEN for Dependabot alerts API." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ALERTS_TOKEN=$GITHUB_TOKEN_FALLBACK" >> "$GITHUB_ENV"
+            echo "DEPENDABOT_ALERTS_TOKEN is not set; using GITHUB_TOKEN fallback." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Precheck Dependabot alerts API access
         run: |
           RESPONSE_FILE="$(mktemp)"
           HTTP_CODE="$(
@@ -73,7 +84,6 @@ jobs:
 
       - name: Discover candidate alerts
         env:
-          ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN || secrets.GITHUB_TOKEN }}
           SEVERITY_THRESHOLD: ${{ inputs.severity_threshold || 'high' }}
           MAX_ALERTS: ${{ inputs.max_alerts || '10' }}
         run: |
@@ -119,6 +129,19 @@ jobs:
           fetch-depth: 0
           ref: main
 
+      - name: Select alerts API token
+        env:
+          DEPENDABOT_ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN }}
+          GITHUB_TOKEN_FALLBACK: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$DEPENDABOT_ALERTS_TOKEN" ]; then
+            echo "ALERTS_TOKEN=$DEPENDABOT_ALERTS_TOKEN" >> "$GITHUB_ENV"
+            echo "Using DEPENDABOT_ALERTS_TOKEN for alert lookup." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ALERTS_TOKEN=$GITHUB_TOKEN_FALLBACK" >> "$GITHUB_ENV"
+            echo "DEPENDABOT_ALERTS_TOKEN is not set; using GITHUB_TOKEN fallback." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -130,7 +153,6 @@ jobs:
       - name: Remediate selected alert
         id: remediate
         env:
-          ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN || secrets.GITHUB_TOKEN }}
           SEVERITY_THRESHOLD: ${{ inputs.severity_threshold || 'high' }}
           DRY_RUN: ${{ inputs.dry_run || false }}
         run: |
