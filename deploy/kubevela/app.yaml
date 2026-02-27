@@ -12,7 +12,7 @@ spec:
       properties:
         labels:
           app: frontend-api
-        image: ghcr.io/adhatcher/frontend_api:742b0715cd0c86865b1da322f1dc644a4efdcdb6
+        image: ghcr.io/adhatcher/frontend_api:bbf1479b688166720e46972947928d0d80ffd588
         memory: 80Mi
         cpu: "0.5"
         port: 8080
