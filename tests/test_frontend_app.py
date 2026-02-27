@@ -73,3 +73,23 @@ def test_security_headers_applied(client):
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
     assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+
+
+def test_resolve_base_dir_uses_current_dir_when_templates_exist(tmp_path):
+    app_dir = tmp_path / "app"
+    templates_dir = app_dir / "templates"
+    templates_dir.mkdir(parents=True)
+
+    resolved = frontend_app._resolve_base_dir(app_dir)
+    assert resolved == app_dir
+
+
+def test_resolve_base_dir_falls_back_to_parent_when_templates_absent(tmp_path):
+    repo_root = tmp_path / "repo"
+    src_dir = repo_root / "src"
+    src_dir.mkdir(parents=True)
+    (repo_root / "templates").mkdir(parents=True)
+
+    resolved = frontend_app._resolve_base_dir(src_dir)
+    assert resolved == repo_root
+    assert (resolved / "templates").exists()

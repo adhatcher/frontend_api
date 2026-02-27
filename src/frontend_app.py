@@ -14,7 +14,14 @@ from requests import RequestException
 
 
 CURRENT_DIR = Path(__file__).resolve().parent
-BASE_DIR = CURRENT_DIR if (CURRENT_DIR / "templates").exists() else CURRENT_DIR.parent
+
+
+def _resolve_base_dir(current_dir: Path) -> Path:
+    """Resolve the app base directory for templates/static across run layouts."""
+    return current_dir if (current_dir / "templates").exists() else current_dir.parent
+
+
+BASE_DIR = _resolve_base_dir(CURRENT_DIR)
 app = Flask(
     __name__,
     template_folder=str(BASE_DIR / "templates"),
