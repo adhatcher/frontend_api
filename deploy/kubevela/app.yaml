@@ -13,29 +13,35 @@ spec:
         labels:
           app: frontend-api
         image: ghcr.io/adhatcher/frontend_api:742b0715cd0c86865b1da322f1dc644a4efdcdb6
+        memory: 80Mi
+        cpu: "0.5"
         port: 8080
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app: frontend-api
         env:
           - name: ENVIRONMENT
             value: production
       traits:
-        - type: resource
+        - type: scaler
           properties:
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-            requests:
-              cpu: "50m"
-              memory: "128Mi"
+            replicas: 1
         - type: hpa
           properties:
+            targetAPIVersion: apps/v1
+            targetKind: Deployment
+            max: 4
             min: 1
-            max: 5
             cpu:
-              type: AverageValue
-              value: 100
+              type: Utilization
+              value: 80
             mem:
               type: AverageValue
-              value: 268435456
+              value: 90
         - type: health-probes
           properties:
             livenessProbe:
@@ -89,3 +95,17 @@ spec:
             service:
               name: frontend-api
               port: 8080
+    - name: frontend-api-pdb
+      type: k8s-objects
+      properties:
+        objects:
+          - apiVersion: policy/v1
+            kind: PodDisruptionBudget
+            metadata:
+              name: frontend-api-pdb
+              namespace: phrases
+            spec:
+              maxUnavailable: 1
+              selector:
+                matchLabels:
+                  app: frontend-api
