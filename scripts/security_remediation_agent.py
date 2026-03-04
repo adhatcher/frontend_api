@@ -120,19 +120,32 @@ def _passes_filters(fields: dict[str, Any], min_severity: str) -> bool:
 
 
 def _api_get_json(repo: str, token: str, path: str, params: dict[str, Any] | None = None) -> Any:
-    encoded_params = urllib.parse.urlencode(params or {})
-    url = f"https://api.github.com/repos/{repo}{path}"
-    if encoded_params:
-        url = f"{url}?{encoded_params}"
+    payload, _ = _api_get_json_with_headers(repo, token, path, params=params)
+    return payload
 
-    request = urllib.request.Request(url)
+
+def _api_get_json_with_headers(
+    repo: str,
+    token: str,
+    path: str,
+    params: dict[str, Any] | None = None,
+    url: str | None = None,
+) -> tuple[Any, dict[str, str]]:
+    request_url = url
+    if not request_url:
+        encoded_params = urllib.parse.urlencode(params or {})
+        request_url = f"https://api.github.com/repos/{repo}{path}"
+        if encoded_params:
+            request_url = f"{request_url}?{encoded_params}"
+
+    request = urllib.request.Request(request_url)
     request.add_header("Accept", "application/vnd.github+json")
     request.add_header("Authorization", f"Bearer {token}")
     request.add_header("X-GitHub-Api-Version", "2022-11-28")
 
     try:
         with urllib.request.urlopen(request, timeout=DEFAULT_TIMEOUT_SECONDS) as response:
-            return json.loads(response.read().decode("utf-8"))
+            return json.loads(response.read().decode("utf-8")), dict(response.headers.items())
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
         hint = ""
@@ -147,22 +160,39 @@ def _api_get_json(repo: str, token: str, path: str, params: dict[str, Any] | Non
         raise RuntimeError(f"GitHub API request failed: {exc.reason}") from exc
 
 
+def _extract_next_link_url(link_header: str) -> str | None:
+    if not link_header:
+        return None
+    for raw_part in link_header.split(","):
+        part = raw_part.strip()
+        if ";" not in part:
+            continue
+        url_part, *attrs = [section.strip() for section in part.split(";")]
+        if 'rel="next"' not in attrs:
+            continue
+        if url_part.startswith("<") and url_part.endswith(">"):
+            return url_part[1:-1]
+    return None
+
+
 def _fetch_open_alerts(repo: str, token: str) -> list[dict[str, Any]]:
-    page = 1
     alerts: list[dict[str, Any]] = []
+    next_url: str | None = None
     while True:
-        payload = _api_get_json(
+        params = {"state": "open", "per_page": 100} if next_url is None else None
+        payload, headers = _api_get_json_with_headers(
             repo,
             token,
             "/dependabot/alerts",
-            {"state": "open", "per_page": 100, "page": page},
+            params=params,
+            url=next_url,
         )
         if not isinstance(payload, list):
             break
         alerts.extend(payload)
-        if len(payload) < 100:
+        next_url = _extract_next_link_url(headers.get("Link", ""))
+        if not next_url:
             break
-        page += 1
     return alerts
 
 
