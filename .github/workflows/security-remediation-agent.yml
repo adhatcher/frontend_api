@@ -185,7 +185,7 @@ jobs:
           echo "title=$(jq -r '.title // ""' remediation.json)" >> "$GITHUB_OUTPUT"
           echo "alert_id=$(jq -r '.alert.alert_id // ""' remediation.json)" >> "$GITHUB_OUTPUT"
           echo "package=$(jq -r '.alert.package // ""' remediation.json)" >> "$GITHUB_OUTPUT"
-          echo "update_type=$(jq -r '.update_type // \"unknown\"' remediation.json)" >> "$GITHUB_OUTPUT"
+          echo "update_type=$(jq -r '.update_type // "unknown"' remediation.json)" >> "$GITHUB_OUTPUT"
           echo "auto_merge_eligible=$(jq -r '.auto_merge_eligible // false' remediation.json)" >> "$GITHUB_OUTPUT"
           jq -r '.pr_body // ""' remediation.json > pr_body.md
           jq -r '.labels // [] | join(",")' remediation.json > labels.txt
@@ -224,19 +224,41 @@ jobs:
           TITLE="${{ steps.result.outputs.title }}"
           LABELS="$(cat labels.txt)"
 
-          if gh pr view "$BRANCH" --json number --jq '.number' >/dev/null 2>&1; then
-            PR_NUMBER="$(gh pr view "$BRANCH" --json number --jq '.number')"
-            gh pr edit "$PR_NUMBER" --title "$TITLE" --body-file pr_body.md --add-label "$LABELS"
-          else
-            gh pr create \
-              --base main \
-              --head "$BRANCH" \
-              --title "$TITLE" \
-              --body-file pr_body.md \
-              --label "$LABELS"
-            PR_NUMBER="$(gh pr view "$BRANCH" --json number --jq '.number')"
+          if [ -n "$LABELS" ]; then
+            VALID_LABELS=""
+            for label in $(echo "$LABELS" | tr ',' '\n'); do
+              if gh label list --json name --jq '.[].name' | grep -q "^${label}$"; then
+                VALID_LABELS="${VALID_LABELS}${label},"
+              fi
+            done
+            LABELS="${VALID_LABELS%,}"
           fi
 
+          if gh pr view "$BRANCH" --json number --jq '.number' >/dev/null 2>&1; then
+            PR_NUMBER="$(gh pr view "$BRANCH" --json number --jq '.number')"
+            if [ -n "$LABELS" ]; then
+              gh pr edit "$PR_NUMBER" --title "$TITLE" --body-file pr_body.md --add-label "$LABELS"
+            else
+              gh pr edit "$PR_NUMBER" --title "$TITLE" --body-file pr_body.md
+            fi
+          else
+            if [ -n "$LABELS" ]; then
+              gh pr create \
+                --base main \
+                --head "$BRANCH" \
+                --title "$TITLE" \
+                --body-file pr_body.md \
+                --label "$LABELS"
+            else
+              gh pr create \
+                --base main \
+                --head "$BRANCH" \
+                --title "$TITLE" \
+                --body-file pr_body.md
+            fi
+          fi
+
+          PR_NUMBER="$(gh pr view "$BRANCH" --json number --jq '.number')"
           echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "Created/updated PR #$PR_NUMBER for alert ${{ steps.result.outputs.alert_id }}." >> "$GITHUB_STEP_SUMMARY"
 
