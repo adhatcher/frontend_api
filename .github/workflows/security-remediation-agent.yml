@@ -61,6 +61,7 @@ jobs:
           fi
 
       - name: Precheck Dependabot alerts API access
+        id: alerts-api
         if: steps.alerts-token.outputs.has_token == 'true'
         run: |
           RESPONSE_FILE="$(mktemp)"
@@ -75,19 +76,22 @@ jobs:
           )"
 
           if [ "$HTTP_CODE" = "200" ]; then
+            echo "has_api_access=true" >> "$GITHUB_OUTPUT"
             echo "Dependabot alerts API access check passed." >> "$GITHUB_STEP_SUMMARY"
             rm -f "$RESPONSE_FILE"
             exit 0
           fi
 
+          echo "has_api_access=false" >> "$GITHUB_OUTPUT"
+          printf '{"alerts":[],"count":0}\n' > alerts.json
           echo "Dependabot alerts API access check failed (HTTP $HTTP_CODE)." | tee -a "$GITHUB_STEP_SUMMARY"
           cat "$RESPONSE_FILE" | tee -a "$GITHUB_STEP_SUMMARY"
           rm -f "$RESPONSE_FILE"
-          echo "Use a token with Dependabot alerts read permission via DEPENDABOT_ALERTS_TOKEN." >> "$GITHUB_STEP_SUMMARY"
-          exit 1
+          echo "Skipping Dependabot alert discovery until DEPENDABOT_ALERTS_TOKEN is refreshed with Dependabot alerts read permission." >> "$GITHUB_STEP_SUMMARY"
+          exit 0
 
       - name: Discover candidate alerts
-        if: steps.alerts-token.outputs.has_token == 'true'
+        if: steps.alerts-api.outputs.has_api_access == 'true'
         env:
           SEVERITY_THRESHOLD: ${{ inputs.severity_threshold || 'high' }}
           MAX_ALERTS: ${{ inputs.max_alerts || '10' }}
